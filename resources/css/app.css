@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap');
+@import 'tailwindcss';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source "../**/*.blade.php";
+@source "../**/*.js";
+@theme { --font-sans: 'Vazirmatn', Tahoma, Arial, sans-serif; }
+:root { font-family: 'Vazirmatn', Tahoma, Arial, sans-serif; }
+body { direction: rtl; }
+button, a { -webkit-tap-highlight-color: transparent; }
+[data-design-image] { touch-action: none; }
