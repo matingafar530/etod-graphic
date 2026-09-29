@@ -14,10 +14,12 @@ class CheckoutController extends Controller
 {
     public function __construct(private readonly CartService $cartService, private readonly OrderService $orderService) {}
 
-    public function create(Request $request): View
+    public function create(Request $request): View|RedirectResponse
     {
         $cart = $this->cartService->currentCart($request)->load('items.variant.product', 'items.variant.color', 'items.variant.size');
-        abort_if($cart->items->isEmpty(), 404, 'سبد خرید خالی است.');
+        if ($cart->items->isEmpty()) {
+            return redirect()->route('cart.index')->with('error', 'برای ادامه، ابتدا محصولی به سبد خرید اضافه کنید.');
+        }
 
         return view('storefront.checkout', ['cart' => $cart, 'totals' => $this->cartService->totals($cart)]);
     }

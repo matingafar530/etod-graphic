@@ -20,6 +20,9 @@
         @if(session('success'))
             <div class="mt-5 rounded-2xl bg-green-50 p-4 font-bold text-green-700">{{ session('success') }}</div>
         @endif
+        @if(session('error'))
+            <div class="mt-5 rounded-2xl bg-amber-50 p-4 font-bold text-amber-700">{{ session('error') }}</div>
+        @endif
 
         @if($cart->items->isEmpty())
             <div class="mt-10 rounded-3xl bg-white p-12 text-center shadow-sm">
