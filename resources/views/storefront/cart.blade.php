@@ -69,7 +69,7 @@
                         <span>جمع کل</span>
                         <strong class="text-xl text-violet-700">{{ number_format($totals['total']) }} ریال</strong>
                     </div>
-                    <button disabled class="mt-7 w-full cursor-not-allowed rounded-2xl bg-slate-200 px-5 py-4 font-black text-slate-500">ادامه به پرداخت — به‌زودی</button>
+                    <a href="{{ route('checkout.create') }}" class="mt-7 block w-full rounded-2xl bg-violet-700 px-5 py-4 text-center font-black text-white shadow-lg shadow-violet-200 hover:bg-violet-800">ادامه به ثبت سفارش آزمایشی</a>
                 </aside>
             </div>
         @endif
