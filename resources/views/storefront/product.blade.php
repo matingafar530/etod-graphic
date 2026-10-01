@@ -21,7 +21,11 @@
             <section class="rounded-3xl bg-white p-5 shadow-sm" data-customizer data-upload-url="{{ route('uploads.store') }}" data-csrf="{{ csrf_token() }}">
                 <div class="relative mx-auto aspect-square max-w-xl overflow-hidden rounded-3xl bg-gradient-to-br from-violet-50 to-purple-100" data-design-stage>
                     <div class="absolute inset-[14%] rounded-2xl border-2 border-dashed border-violet-400/70 bg-white/30" data-print-area></div>
-                    <div class="absolute inset-0 flex items-center justify-center text-8xl opacity-25">{{ $product->slug === 't-shirt' ? '👕' : '✦' }}</div>
+                    @if($product->images->first())
+                        <img src="{{ route('products.images.show', $product->images->first()) }}" alt="{{ $product->images->first()->alt_text ?: $product->name }}" class="absolute inset-0 h-full w-full object-contain p-8">
+                    @else
+                        <div class="absolute inset-0 flex items-center justify-center text-8xl opacity-25">{{ $product->slug === 't-shirt' ? '👕' : '✦' }}</div>
+                    @endif
                     <img data-design-image class="absolute hidden max-h-full max-w-full object-contain" alt="پیش‌نمایش طرح">
                 </div>
                 <div class="hidden" data-print-area-wrap>

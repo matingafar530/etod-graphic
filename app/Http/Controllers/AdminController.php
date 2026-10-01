@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AdjustInventoryRequest;
+use App\Http\Requests\ProductRequest;
 use App\Http\Requests\UpdateOrderStatusRequest;
+use App\Models\Category;
 use App\Models\Order;
 use App\Models\PrintJob;
+use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\InventoryService;
 use App\Services\OrderStatusService;
@@ -61,5 +64,34 @@ class AdminController extends Controller
         $inventory->adjust($variant, $request->integer('quantity'), $request->string('reason')->toString());
 
         return back()->with('success', 'موجودی با موفقیت به‌روزرسانی شد.');
+    }
+
+    public function products(): View
+    {
+        return view('admin.products', ['products' => Product::query()->with('category')->withCount('variants', 'images')->latest()->paginate(20)]);
+    }
+
+    public function createProduct(): View
+    {
+        return view('admin.product-form', ['product' => new Product(['status' => 'draft', 'is_customizable' => true]), 'categories' => Category::where('is_active', true)->orderBy('name')->get()]);
+    }
+
+    public function storeProduct(ProductRequest $request): RedirectResponse
+    {
+        $product = Product::create($request->validated());
+
+        return redirect()->route('admin.products.edit', $product)->with('success', 'محصول ایجاد شد.');
+    }
+
+    public function editProduct(Product $product): View
+    {
+        return view('admin.product-form', ['product' => $product->load('images', 'variants'), 'categories' => Category::where('is_active', true)->orderBy('name')->get()]);
+    }
+
+    public function updateProduct(ProductRequest $request, Product $product): RedirectResponse
+    {
+        $product->update($request->validated());
+
+        return back()->with('success', 'محصول به‌روزرسانی شد.');
     }
 }

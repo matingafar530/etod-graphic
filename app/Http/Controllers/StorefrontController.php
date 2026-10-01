@@ -21,7 +21,7 @@ class StorefrontController extends Controller
         abort_unless($product->status === 'published', 404);
 
         return view('storefront.product', [
-            'product' => $product->load(['variants' => fn ($query) => $query->where('is_active', true)->with(['color', 'size', 'printTemplate'])]),
+            'product' => $product->load(['images', 'variants' => fn ($query) => $query->where('is_active', true)->with(['color', 'size', 'printTemplate'])]),
         ]);
     }
 }

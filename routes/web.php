@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\UploadController;
 use Illuminate\Support\Facades\Route;
@@ -17,9 +18,17 @@ if (app()->environment(['local', 'testing'])) {
         Route::get('/print-queue', [AdminController::class, 'printQueue'])->name('print-queue');
         Route::get('/inventory', [AdminController::class, 'inventory'])->name('inventory');
         Route::patch('/inventory/{variant}', [AdminController::class, 'adjustInventory'])->name('inventory.adjust');
+        Route::get('/products', [AdminController::class, 'products'])->name('products');
+        Route::get('/products/create', [AdminController::class, 'createProduct'])->name('products.create');
+        Route::post('/products', [AdminController::class, 'storeProduct'])->name('products.store');
+        Route::get('/products/{product}/edit', [AdminController::class, 'editProduct'])->name('products.edit');
+        Route::patch('/products/{product}', [AdminController::class, 'updateProduct'])->name('products.update');
+        Route::post('/products/{product}/images', [ProductImageController::class, 'store'])->name('products.images.store');
+        Route::delete('/product-images/{image}', [ProductImageController::class, 'destroy'])->name('products.images.destroy');
     });
 }
 
+Route::get('/product-images/{image}', [ProductImageController::class, 'show'])->name('products.images.show');
 Route::get('/', [StorefrontController::class, 'index'])->name('home');
 Route::get('/products/{product:slug}', [StorefrontController::class, 'show'])->name('products.show');
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
