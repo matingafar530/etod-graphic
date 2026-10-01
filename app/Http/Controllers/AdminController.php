@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AdjustInventoryRequest;
 use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Models\Order;
+use App\Models\PrintJob;
+use App\Models\ProductVariant;
+use App\Services\InventoryService;
 use App\Services\OrderStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -40,5 +44,22 @@ class AdminController extends Controller
         $statuses->change($order, $request->string('status')->toString());
 
         return back()->with('success', 'وضعیت سفارش با موفقیت تغییر کرد.');
+    }
+
+    public function printQueue(): View
+    {
+        return view('admin.print-queue', ['jobs' => PrintJob::query()->with('order', 'orderItem', 'variant.product', 'variant.color', 'variant.size')->whereIn('status', ['queued', 'printing'])->latest()->paginate(30)]);
+    }
+
+    public function inventory(): View
+    {
+        return view('admin.inventory', ['variants' => ProductVariant::query()->with('product', 'color', 'size')->orderBy('stock')->paginate(30)]);
+    }
+
+    public function adjustInventory(AdjustInventoryRequest $request, ProductVariant $variant, InventoryService $inventory): RedirectResponse
+    {
+        $inventory->adjust($variant, $request->integer('quantity'), $request->string('reason')->toString());
+
+        return back()->with('success', 'موجودی با موفقیت به‌روزرسانی شد.');
     }
 }

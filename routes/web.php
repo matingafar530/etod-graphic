@@ -14,6 +14,9 @@ if (app()->environment(['local', 'testing'])) {
         Route::get('/orders', [AdminController::class, 'orders'])->name('orders');
         Route::get('/orders/{order}', [AdminController::class, 'show'])->name('orders.show');
         Route::patch('/orders/{order}/status', [AdminController::class, 'updateStatus'])->name('orders.status');
+        Route::get('/print-queue', [AdminController::class, 'printQueue'])->name('print-queue');
+        Route::get('/inventory', [AdminController::class, 'inventory'])->name('inventory');
+        Route::patch('/inventory/{variant}', [AdminController::class, 'adjustInventory'])->name('inventory.adjust');
     });
 }
 

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\PrintJob;
 use App\Models\ProductVariant;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Http\Request;
@@ -81,6 +82,13 @@ class OrderService
             }
             $order->payments()->create(['provider' => 'mock', 'status' => 'paid', 'amount' => $order->total_price, 'currency' => $order->currency, 'transaction_id' => 'MOCK-'.$order->order_number, 'verified_at' => now(), 'verification_data' => ['environment' => 'development']]);
             $order->update(['status' => 'paid', 'payment_status' => 'paid', 'paid_at' => now()]);
+            foreach ($order->items as $item) {
+                PrintJob::firstOrCreate(
+                    ['order_item_id' => $item->id],
+                    ['order_id' => $order->id, 'product_variant_id' => $item->product_variant_id, 'status' => 'queued', 'preview_path' => $item->preview_image_path],
+                );
+            }
+
             foreach ($order->items as $item) {
                 ProductVariant::whereKey($item->product_variant_id)->decrement('reserved_stock', $item->quantity);
             }
