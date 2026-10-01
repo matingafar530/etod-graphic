@@ -23,10 +23,13 @@ class CartController extends Controller
 
     public function store(AddToCartRequest $request): RedirectResponse
     {
-        $customization = $request->input('customization_data', []);
+        $customization = $request->input('customization_data');
+        $customization = is_array($customization) ? $customization : [];
+
         if ($request->filled('upload_id')) {
             $customization['upload_id'] = $request->integer('upload_id');
         }
+
         $this->cartService->add($request, ProductVariant::findOrFail($request->integer('variant_id')), $request->integer('quantity'), $customization);
 
         return redirect()->route('cart.index')->with('success', 'محصول با موفقیت به سبد خرید اضافه شد.');

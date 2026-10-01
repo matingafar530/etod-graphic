@@ -25,8 +25,10 @@ class CartService
         );
     }
 
-    public function add(Request $request, ProductVariant $variant, int $quantity, array $customization = []): CartItem
+    public function add(Request $request, ProductVariant $variant, int $quantity, ?array $customization = []): CartItem
     {
+        $customization = is_array($customization) ? $customization : [];
+
         return $this->database->transaction(function () use ($request, $variant, $quantity, $customization) {
             $lockedVariant = ProductVariant::query()->with('product')->lockForUpdate()->findOrFail($variant->id);
             $available = $lockedVariant->stock - $lockedVariant->reserved_stock;

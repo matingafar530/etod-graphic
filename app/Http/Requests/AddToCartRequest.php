@@ -14,10 +14,13 @@ class AddToCartRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $value = $this->input('customization_data');
+
         if (is_string($value)) {
             $decoded = json_decode($value, true);
-            $this->merge(['customization_data' => is_array($decoded) ? $decoded : null]);
+            $value = is_array($decoded) ? $decoded : [];
         }
+
+        $this->merge(['customization_data' => is_array($value) ? $value : []]);
     }
 
     public function rules(): array

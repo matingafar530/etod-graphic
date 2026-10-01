@@ -40,6 +40,16 @@ class CartTest extends TestCase
         ]);
     }
 
+    public function test_cart_accepts_request_without_customization_data(): void
+    {
+        $category = Category::create(['name' => 'تست بدون تصویر', 'slug' => 'no-customization-test', 'is_active' => true]);
+        $product = Product::create(['category_id' => $category->id, 'name' => 'محصول بدون تصویر', 'slug' => 'no-customization-product', 'status' => 'published', 'base_price' => 100000, 'printing_price' => 0]);
+        $variant = ProductVariant::create(['product_id' => $product->id, 'sku' => 'NO-CUSTOMIZATION-1', 'price' => 100000, 'printing_price' => 0, 'stock' => 2, 'reserved_stock' => 0, 'is_active' => true]);
+
+        $this->post(route('cart.items.store'), ['variant_id' => $variant->id, 'quantity' => 1])->assertRedirect(route('cart.index'));
+        $this->assertDatabaseHas('cart_items', ['product_variant_id' => $variant->id, 'quantity' => 1, 'customization_data' => null]);
+    }
+
     public function test_cart_rejects_quantity_above_available_stock(): void
     {
         $category = Category::create(['name' => 'تست', 'slug' => 'stock-test', 'is_active' => true]);
