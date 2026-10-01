@@ -1,11 +1,21 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\UploadController;
 use Illuminate\Support\Facades\Route;
+
+if (app()->environment(['local', 'testing'])) {
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/orders', [AdminController::class, 'orders'])->name('orders');
+        Route::get('/orders/{order}', [AdminController::class, 'show'])->name('orders.show');
+        Route::patch('/orders/{order}/status', [AdminController::class, 'updateStatus'])->name('orders.status');
+    });
+}
 
 Route::get('/', [StorefrontController::class, 'index'])->name('home');
 Route::get('/products/{product:slug}', [StorefrontController::class, 'show'])->name('products.show');
