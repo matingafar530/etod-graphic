@@ -10,12 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('[data-customizer]').forEach((root) => {
         const fileInput = root.querySelector('[data-image-input]');
-        const form = root.querySelector('[data-cart-form]');
+        const form = root.querySelector('[data-cart-form]') ?? document.querySelector('[data-cart-form]');
         const stage = root.querySelector('[data-design-stage]');
         const image = root.querySelector('[data-design-image]');
         const area = root.querySelector('[data-print-area]');
-        const uploadId = root.querySelector('[data-upload-id]');
-        const dataInput = root.querySelector('[data-customization-data]');
+        const uploadId = root.querySelector('[data-upload-id]') ?? form?.querySelector('[data-upload-id]');
+        const dataInput = root.querySelector('[data-customization-data]') ?? form?.querySelector('[data-customization-data]');
         const status = root.querySelector('[data-upload-status]');
         const scale = root.querySelector('[data-scale]');
         let design = { x: 50, y: 50, width: 45, height: 45, rotation: 0 };
