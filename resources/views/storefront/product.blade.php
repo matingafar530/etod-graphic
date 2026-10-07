@@ -22,15 +22,27 @@
                 <div class="relative mx-auto aspect-square max-w-xl overflow-hidden rounded-3xl bg-gradient-to-br from-violet-50 to-purple-100" data-design-stage>
                     <div class="absolute inset-[14%] rounded-2xl border-2 border-dashed border-violet-400/70 bg-white/30" data-print-area></div>
                     @if($product->images->first())
-                        <img src="{{ route('products.images.show', $product->images->first()) }}" alt="{{ $product->images->first()->alt_text ?: $product->name }}" class="absolute inset-0 h-full w-full object-contain p-8">
+                        <img src="{{ route('products.images.show', $product->images->first()) }}" alt="{{ $product->images->first()->alt_text ?: $product->name }}" data-product-image class="absolute inset-0 h-full w-full object-contain p-8">
                     @else
                         <div class="absolute inset-0 flex items-center justify-center text-8xl opacity-25">{{ $product->slug === 't-shirt' ? '👕' : '✦' }}</div>
                     @endif
-                    <img data-design-image class="absolute hidden max-h-full max-w-full object-contain" alt="پیش‌نمایش طرح">
+                    <img data-design-image class="absolute hidden max-h-full max-w-full touch-none object-contain drop-shadow-lg" alt="پیش‌نمایش طرح">
                 </div>
+                @if($product->images->count() > 1)
+                    <div class="mt-4 flex flex-wrap justify-center gap-2" data-gallery>
+                        @foreach($product->images as $image)
+                            <button type="button" data-gallery-thumb="{{ route('products.images.show', $image) }}" aria-label="{{ $image->alt_text ?: $product->name }}"
+                                class="overflow-hidden rounded-xl border-2 {{ $image->is($product->images->first()) ? 'border-violet-600' : 'border-transparent opacity-80 hover:opacity-100' }} transition">
+                                <img src="{{ route('products.images.show', $image) }}" alt="{{ $image->alt_text ?: $product->name }}" class="h-16 w-16 object-cover">
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
                 <div class="hidden" data-print-area-wrap>
                     <label class="mt-5 block text-sm font-bold" for="design-scale">اندازه طرح</label>
                     <input id="design-scale" data-scale type="range" min="10" max="80" value="45" class="mt-3 w-full accent-violet-700">
+                    <label class="mt-4 block text-sm font-bold" for="design-rotation">چرخش طرح</label>
+                    <input id="design-rotation" data-rotation type="range" min="-180" max="180" step="5" value="0" class="mt-3 w-full accent-violet-700">
                 </div>
                 <label class="mt-5 flex cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-violet-200 bg-violet-50 px-5 py-6 text-center font-bold text-violet-700">
                     <input data-image-input type="file" accept="image/jpeg,image/png,image/webp" class="hidden">
