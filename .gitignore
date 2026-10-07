@@ -21,3 +21,29 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+# Local secrets and machine-specific environment files
+/.env.*
+!/.env.example
+
+# Private user uploads, local media and generated storage
+/storage/app/private/**
+!/storage/app/private/.gitignore
+/storage/app/public/**
+!/storage/app/public/.gitignore
+/public/storage
+/public/uploads/
+
+# Local databases, exports and backup archives
+/database/*.sqlite
+/database/*.sqlite-*
+/database/*.sql
+/database/*.dump
+/database/*.db
+*.sql
+*.dump
+*.bak
+*.backup
+*.zip
+
+# Generated PHPUnit cache
+/.phpunit.result.cache
