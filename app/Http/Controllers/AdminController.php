@@ -14,9 +14,9 @@ use App\Models\ProductVariant;
 use App\Services\InventoryService;
 use App\Services\OrderStatusService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class AdminController extends Controller
 {
@@ -117,6 +117,7 @@ class AdminController extends Controller
     public function confirmArchiveProduct(Product $product): View
     {
         abort_unless(app()->environment(['local', 'testing']), 404);
+
         return view('admin.product-archive', compact('product'));
     }
 

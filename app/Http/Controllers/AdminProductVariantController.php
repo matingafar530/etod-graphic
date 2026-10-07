@@ -41,7 +41,9 @@ class AdminProductVariantController extends Controller
 
         $variant = DB::transaction(function () use ($product, $data, $initialStock, $reason, $inventory) {
             $variant = $product->variants()->create($data + ['stock' => 0, 'reserved_stock' => 0]);
-            if ($initialStock > 0) $inventory->adjust($variant, $initialStock, $reason);
+            if ($initialStock > 0) {
+                $inventory->adjust($variant, $initialStock, $reason);
+            }
 
             return $variant;
         });
