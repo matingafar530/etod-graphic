@@ -29,4 +29,9 @@ class OrderItem extends Model
     {
         return $this->hasOne(Review::class);
     }
+
+    public function portfolioItem(): HasOne
+    {
+        return $this->hasOne(PortfolioItem::class);
+    }
 }

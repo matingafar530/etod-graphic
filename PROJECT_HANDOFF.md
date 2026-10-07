@@ -968,3 +968,16 @@ Review system implemented (Phase C items 1-4):
 - Order page now renders success/error banners and validation errors.
 
 Tests: 32 passed, 100 assertions. Pint clean. Full lifecycle verified in the browser (completed order → submit review → admin approve → visible on product page). Phase C remaining: portfolio items with consent audit trail, separate social-media consent. Next after that: Phase D notifications or Phase E admin authentication.
+
+## 18. Update — 2026-10-07 (Phase C complete: portfolio and consents)
+
+Portfolio and consent work finished (Phase C items 5-7):
+
+- Checkout now **persists both consents** (this was previously discarded): `portfolio_consent`/`consent_at` existed but were never saved; added `social_media_consent`/`social_consent_at` by migration, both validated in `CheckoutRequest`, saved in `OrderService::createFromCart` with an `order.consent` audit-log entry (values + IP). Checkout form has two separate consent checkboxes.
+- `portfolio_items` table + `App\Models\PortfolioItem` (order, order_item unique, product, title, description, copied image path, is_published + published_at).
+- Admin creates a portfolio draft from an order item on the admin order detail page (button only when the customer consented, the item has a preview image, and no portfolio item exists yet). The design file is **copied** into `portfolio/` on the local disk so deleting the original upload cannot break the portfolio. `portfolio.created` audit entry.
+- Admin portfolio page: grid with private image route for drafts, publish/unpublish (`portfolio.published`/`portfolio.unpublished` audit) and delete confirmation. Public image route `/portfolio-images/{item}` serves **published** items only, with public cache headers.
+- Storefront home page gained a portfolio section (published items, lazy images) and nav link.
+- Order model casts extended (consent booleans/dates); admin order page shows a consent status card and item design thumbnails.
+
+Tests: 38 passed, 124 assertions. Pint clean. Full flow verified in the browser (checkout consents → admin order page → draft → publish → visible on home). **Phase C is now complete.** Next: Phase D (notifications/queues with log driver) or Phase E (admin authentication — still the largest security item before any deployment).

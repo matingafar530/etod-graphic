@@ -9,6 +9,7 @@ use App\Models\PrintJob;
 use App\Models\ProductVariant;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -38,7 +39,23 @@ class OrderService
                 'customer_name' => $customer['customer_name'],
                 'customer_phone' => $customer['customer_phone'],
                 'customer_address' => $customer['customer_address'],
+                'portfolio_consent' => (bool) ($customer['portfolio_consent'] ?? false),
+                'consent_at' => ! empty($customer['portfolio_consent']) ? now() : null,
+                'social_media_consent' => (bool) ($customer['social_media_consent'] ?? false),
+                'social_consent_at' => ! empty($customer['social_media_consent']) ? now() : null,
                 'currency' => 'IRR',
+            ]);
+
+            DB::table('audit_logs')->insert([
+                'user_id' => $request->user()?->id,
+                'action' => 'order.consent',
+                'auditable_type' => Order::class,
+                'auditable_id' => $order->id,
+                'old_values' => null,
+                'new_values' => json_encode(['portfolio_consent' => (bool) ($customer['portfolio_consent'] ?? false), 'social_media_consent' => (bool) ($customer['social_media_consent'] ?? false)], JSON_UNESCAPED_UNICODE),
+                'ip_address' => $request->ip(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             $subtotal = 0;

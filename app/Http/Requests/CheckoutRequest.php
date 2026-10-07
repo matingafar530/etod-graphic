@@ -18,6 +18,7 @@ class CheckoutRequest extends FormRequest
             'customer_phone' => ['required', 'string', 'regex:/^09[0-9]{9}$/'],
             'customer_address' => ['required', 'string', 'min:10', 'max:1000'],
             'portfolio_consent' => ['nullable', 'boolean'],
+            'social_media_consent' => ['nullable', 'boolean'],
         ];
     }
 

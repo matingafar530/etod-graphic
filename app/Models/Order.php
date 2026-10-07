@@ -12,7 +12,7 @@ class Order extends Model
 
     protected function casts(): array
     {
-        return ['portfolio_consent' => 'boolean', 'consent_at' => 'datetime', 'paid_at' => 'datetime'];
+        return ['portfolio_consent' => 'boolean', 'social_media_consent' => 'boolean', 'consent_at' => 'datetime', 'social_consent_at' => 'datetime', 'paid_at' => 'datetime'];
     }
 
     public function user(): BelongsTo

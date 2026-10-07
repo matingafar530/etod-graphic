@@ -8,6 +8,8 @@ use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Models\Category;
 use App\Models\InventoryMovement;
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\PortfolioItem;
 use App\Models\PrintJob;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -17,7 +19,9 @@ use App\Services\OrderStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AdminController extends Controller
 {
@@ -43,7 +47,7 @@ class AdminController extends Controller
 
     public function show(Order $order, OrderStatusService $statuses): View
     {
-        return view('admin.order', ['order' => $order->load('items', 'payments'), 'nextStatuses' => $statuses->allowedNextStatuses($order->status)]);
+        return view('admin.order', ['order' => $order->load(['items.review', 'items.portfolioItem', 'payments']), 'nextStatuses' => $statuses->allowedNextStatuses($order->status)]);
     }
 
     public function updateStatus(UpdateOrderStatusRequest $request, Order $order, OrderStatusService $statuses): RedirectResponse
@@ -160,5 +164,79 @@ class AdminController extends Controller
         DB::table('audit_logs')->insert(['user_id' => $request->user()?->id, 'action' => 'review.moderated', 'auditable_type' => Review::class, 'auditable_id' => $review->id, 'old_values' => json_encode($old), 'new_values' => json_encode(['status' => $data['status']], JSON_UNESCAPED_UNICODE), 'ip_address' => $request->ip(), 'created_at' => now(), 'updated_at' => now()]);
 
         return back()->with('success', 'وضعیت نظر به‌روزرسانی شد.');
+    }
+
+    public function portfolio(): View
+    {
+        return view('admin.portfolio', ['items' => PortfolioItem::query()->with('product', 'order')->latest()->paginate(24)]);
+    }
+
+    public function portfolioImage(PortfolioItem $portfolio): BinaryFileResponse
+    {
+        abort_unless(Storage::disk('local')->exists($portfolio->image_path), 404);
+
+        return response()->file(Storage::disk('local')->path($portfolio->image_path), ['Cache-Control' => 'private, max-age=300']);
+    }
+
+    public function storePortfolio(Request $request): RedirectResponse
+    {
+        abort_unless(app()->environment(['local', 'testing']), 404);
+        $data = $request->validate([
+            'order_item_id' => ['required', 'integer', 'exists:order_items,id'],
+            'title' => ['nullable', 'string', 'max:120'],
+            'description' => ['nullable', 'string', 'max:1000'],
+        ]);
+        $item = OrderItem::query()->with('order', 'variant')->findOrFail($data['order_item_id']);
+        $order = $item->order;
+        if (! $order->portfolio_consent) {
+            return back()->with('error', 'مشتری اجازه انتشار در نمونه‌کارها را نداده است.');
+        }
+        if (PortfolioItem::query()->where('order_item_id', $item->id)->exists()) {
+            return back()->with('error', 'این قلم قبلاً به نمونه‌کارها اضافه شده است.');
+        }
+        if (! $item->preview_image_path || ! Storage::disk('local')->exists($item->preview_image_path)) {
+            return back()->with('error', 'تصویر طرح برای این قلم یافت نشد.');
+        }
+
+        $extension = pathinfo($item->preview_image_path, PATHINFO_EXTENSION) ?: 'png';
+        $path = 'portfolio/portfolio-'.uniqid().'.'.$extension;
+        Storage::disk('local')->copy($item->preview_image_path, $path);
+        $title = ($data['title'] ?? '') !== '' ? $data['title'] : $item->product_name;
+        PortfolioItem::create([
+            'order_id' => $order->id,
+            'order_item_id' => $item->id,
+            'product_id' => $item->variant?->product_id,
+            'title' => $title,
+            'description' => $data['description'] ?? null,
+            'image_path' => $path,
+        ]);
+        $this->logAudit($request, 'portfolio.created', $order->id, null, ['order_item_id' => $item->id, 'title' => $title]);
+
+        return back()->with('success', 'نمونه‌کار به‌صورت پیش‌نویس ساخته شد.');
+    }
+
+    public function togglePortfolioPublish(Request $request, PortfolioItem $portfolio): RedirectResponse
+    {
+        abort_unless(app()->environment(['local', 'testing']), 404);
+        $old = ['is_published' => $portfolio->is_published];
+        $portfolio->update(['is_published' => ! $portfolio->is_published, 'published_at' => $portfolio->is_published ? null : now()]);
+        $this->logAudit($request, 'portfolio.'.($portfolio->is_published ? 'published' : 'unpublished'), $portfolio->id, $old, ['is_published' => $portfolio->is_published]);
+
+        return back()->with('success', $portfolio->is_published ? 'نمونه‌کار منتشر شد.' : 'نمونه‌کار از حالت انتشار خارج شد.');
+    }
+
+    public function destroyPortfolio(Request $request, PortfolioItem $portfolio): RedirectResponse
+    {
+        abort_unless(app()->environment(['local', 'testing']), 404);
+        Storage::disk('local')->delete($portfolio->image_path);
+        $portfolio->delete();
+        $this->logAudit($request, 'portfolio.deleted', $portfolio->id, ['title' => $portfolio->title], null);
+
+        return back()->with('success', 'نمونه‌کار حذف شد.');
+    }
+
+    private function logAudit(Request $request, string $action, int $auditableId, ?array $old, ?array $new): void
+    {
+        DB::table('audit_logs')->insert(['user_id' => $request->user()?->id, 'action' => $action, 'auditable_type' => 'portfolio', 'auditable_id' => $auditableId, 'old_values' => $old ? json_encode($old, JSON_UNESCAPED_UNICODE) : null, 'new_values' => $new ? json_encode($new, JSON_UNESCAPED_UNICODE) : null, 'ip_address' => $request->ip(), 'created_at' => now(), 'updated_at' => now()]);
     }
 }

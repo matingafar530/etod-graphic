@@ -47,10 +47,16 @@ if (app()->environment(['local', 'testing'])) {
         Route::delete('/product-images/{image}', [ProductImageController::class, 'destroy'])->name('products.images.destroy');
         Route::get('/reviews', [AdminController::class, 'reviews'])->name('reviews');
         Route::patch('/reviews/{review}/status', [AdminController::class, 'updateReviewStatus'])->name('reviews.status');
+        Route::get('/portfolio', [AdminController::class, 'portfolio'])->name('portfolio');
+        Route::get('/portfolio/{portfolio}/image', [AdminController::class, 'portfolioImage'])->name('portfolio.image');
+        Route::post('/portfolio', [AdminController::class, 'storePortfolio'])->name('portfolio.store');
+        Route::patch('/portfolio/{portfolio}/publish', [AdminController::class, 'togglePortfolioPublish'])->name('portfolio.publish');
+        Route::delete('/portfolio/{portfolio}', [AdminController::class, 'destroyPortfolio'])->name('portfolio.destroy');
     });
 }
 
 Route::get('/product-images/{image}', [ProductImageController::class, 'show'])->name('products.images.show');
+Route::get('/portfolio-images/{portfolio}', [StorefrontController::class, 'portfolioImage'])->name('portfolio.image');
 Route::get('/', [StorefrontController::class, 'index'])->name('home');
 Route::get('/products/{product:slug}', [StorefrontController::class, 'show'])->name('products.show');
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
