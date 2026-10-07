@@ -981,3 +981,16 @@ Portfolio and consent work finished (Phase C items 5-7):
 - Order model casts extended (consent booleans/dates); admin order page shows a consent status card and item design thumbnails.
 
 Tests: 38 passed, 124 assertions. Pint clean. Full flow verified in the browser (checkout consents → admin order page → draft → publish → visible on home). **Phase C is now complete.** Next: Phase D (notifications/queues with log driver) or Phase E (admin authentication — still the largest security item before any deployment).
+
+## 19. Update — 2026-10-07 (Phase D started: notifications and queues)
+
+Notification infrastructure implemented (Phase D items 1-5 as log-driver versions):
+
+- `config/etod.php` now exposes the ETOD_* env keys (currency, payment_driver, sms_driver, whatsapp_driver) — code must read `config('etod.*')`, never env() directly.
+- `notification_logs` table + `App\Services\NotificationService`: builds Persian messages per event, transports via the log driver (SMS.ir / WhatsApp Cloud adapters intentionally deferred; non-log drivers throw "not implemented" which lands in the log as failed).
+- Domain events `App\Events\{OrderCreated,OrderPaid,OrderReady}` fired from `OrderService::createFromCart` (after the transaction commits), `OrderService::mockPay` (only on the actual first payment, after commit), and `OrderStatusService::change` (on ready). Queued listeners in `app/Listeners/Send*Notifications.php` (`ShouldQueue`, `$afterCommit = true`) write sms+whatsapp entries per event and skip when no customer phone exists.
+- **Gotcha solved:** Laravel 11+ auto-discovers listeners in app/Listeners — do NOT also register them via `Event::listen` in a provider (double registration caused duplicate notifications). Also, dispatch events AFTER transactions close; `afterCommit` on sync-driver test runs executes inline and can double-fire.
+- Admin `/admin/notifications`: notification log table (channel, event, order, recipient, message, status) and failed-jobs list with a retry button (`queue:retry` by uuid).
+- Development needs `php artisan queue:work` running for queued notifications to be processed (QUEUE_CONNECTION=database in .env). In tests, QUEUE_CONNECTION=sync makes listeners run inline.
+
+Tests: 43 passed, 135 assertions. Pint clean. Verified in the browser end-to-end (checkout → queue worker → admin notification log shows sent sms/whatsapp entries). Phase D remaining: failed-notification re-send UX, admin reminder for unseen orders, later real SMS.ir/WhatsApp adapters (deferred). Next major item: Phase E admin authentication.

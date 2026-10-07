@@ -16,6 +16,8 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Bootstrap any application services.
+     *
+     * Event listeners in app/Listeners are auto-discovered by Laravel.
      */
     public function boot(): void
     {

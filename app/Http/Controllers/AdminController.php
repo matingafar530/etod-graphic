@@ -18,6 +18,7 @@ use App\Services\InventoryService;
 use App\Services\OrderStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -238,5 +239,23 @@ class AdminController extends Controller
     private function logAudit(Request $request, string $action, int $auditableId, ?array $old, ?array $new): void
     {
         DB::table('audit_logs')->insert(['user_id' => $request->user()?->id, 'action' => $action, 'auditable_type' => 'portfolio', 'auditable_id' => $auditableId, 'old_values' => $old ? json_encode($old, JSON_UNESCAPED_UNICODE) : null, 'new_values' => $new ? json_encode($new, JSON_UNESCAPED_UNICODE) : null, 'ip_address' => $request->ip(), 'created_at' => now(), 'updated_at' => now()]);
+    }
+
+    public function notifications(): View
+    {
+        return view('admin.notifications', [
+            'logs' => DB::table('notification_logs')->latest('id')->paginate(25),
+            'failedJobs' => DB::table('failed_jobs')->orderByDesc('id')->limit(50)->get(),
+        ]);
+    }
+
+    public function retryFailedJob(Request $request, string $uuid): RedirectResponse
+    {
+        abort_unless(app()->environment(['local', 'testing']), 404);
+        abort_unless(DB::table('failed_jobs')->where('uuid', $uuid)->exists(), 404);
+
+        Artisan::call('queue:retry', ['id' => [$uuid]]);
+
+        return back()->with('success', 'کار شکسته برای تلاش مجدد به صف برگردانده شد.');
     }
 }

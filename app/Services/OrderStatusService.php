@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\OrderReady;
 use App\Models\Order;
 use Illuminate\Validation\ValidationException;
 
@@ -27,6 +28,10 @@ class OrderStatusService
         }
 
         $order->update(['status' => $nextStatus]);
+
+        if ($nextStatus === 'ready') {
+            OrderReady::dispatch($order->fresh());
+        }
 
         return $order->fresh();
     }

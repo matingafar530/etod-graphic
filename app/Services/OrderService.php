@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Events\OrderCreated;
+use App\Events\OrderPaid;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -19,7 +21,7 @@ class OrderService
 
     public function createFromCart(Request $request, array $customer): Order
     {
-        return $this->database->transaction(function () use ($request, $customer) {
+        $order = $this->database->transaction(function () use ($request, $customer) {
             $cart = Cart::query()->with('items.variant.product', 'items.variant.color', 'items.variant.size', 'items.upload')->where(
                 $request->user() ? 'user_id' : 'session_id',
                 $request->user()?->id ?? $request->session()->getId(),
@@ -91,14 +93,18 @@ class OrderService
 
             return $order->fresh('items');
         });
+
+        OrderCreated::dispatch($order);
+
+        return $order;
     }
 
     public function mockPay(Order $order): Order
     {
-        return $this->database->transaction(function () use ($order) {
+        $paid = $this->database->transaction(function () use ($order) {
             $order = Order::query()->lockForUpdate()->findOrFail($order->id);
             if ($order->payment_status === 'paid') {
-                return $order;
+                return false;
             }
             $order->payments()->create(['provider' => 'mock', 'status' => 'paid', 'amount' => $order->total_price, 'currency' => $order->currency, 'transaction_id' => 'MOCK-'.$order->order_number, 'verified_at' => now(), 'verification_data' => ['environment' => 'development']]);
             $order->update(['status' => 'paid', 'payment_status' => 'paid', 'paid_at' => now()]);
@@ -113,8 +119,14 @@ class OrderService
                 ProductVariant::whereKey($item->product_variant_id)->decrement('reserved_stock', $item->quantity);
             }
 
-            return $order->fresh('items');
+            return true;
         });
+
+        if ($paid) {
+            OrderPaid::dispatch($order->fresh('items'));
+        }
+
+        return $order->fresh('items');
     }
 
     private function nextOrderNumber(): string

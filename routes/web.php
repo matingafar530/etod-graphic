@@ -52,6 +52,8 @@ if (app()->environment(['local', 'testing'])) {
         Route::post('/portfolio', [AdminController::class, 'storePortfolio'])->name('portfolio.store');
         Route::patch('/portfolio/{portfolio}/publish', [AdminController::class, 'togglePortfolioPublish'])->name('portfolio.publish');
         Route::delete('/portfolio/{portfolio}', [AdminController::class, 'destroyPortfolio'])->name('portfolio.destroy');
+        Route::get('/notifications', [AdminController::class, 'notifications'])->name('notifications');
+        Route::post('/failed-jobs/{uuid}/retry', [AdminController::class, 'retryFailedJob'])->name('failed-jobs.retry');
     });
 }
 
