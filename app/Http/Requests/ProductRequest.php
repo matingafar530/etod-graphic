@@ -23,7 +23,7 @@ class ProductRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:5000'],
             'base_price' => ['required', 'integer', 'min:0'],
             'printing_price' => ['required', 'integer', 'min:0'],
-            'status' => ['required', 'in:draft,published,archived'],
+            'status' => ['required', Rule::in($this->route('product')?->status === 'archived' ? ['archived'] : ['draft', 'published'])],
             'is_customizable' => ['nullable', 'boolean'],
         ];
     }

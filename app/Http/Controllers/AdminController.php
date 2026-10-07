@@ -6,6 +6,7 @@ use App\Http\Requests\AdjustInventoryRequest;
 use App\Http\Requests\ProductRequest;
 use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Models\Category;
+use App\Models\InventoryMovement;
 use App\Models\Order;
 use App\Models\PrintJob;
 use App\Models\Product;
@@ -14,6 +15,8 @@ use App\Services\InventoryService;
 use App\Services\OrderStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -49,14 +52,30 @@ class AdminController extends Controller
         return back()->with('success', 'وضعیت سفارش با موفقیت تغییر کرد.');
     }
 
-    public function printQueue(): View
+    public function printQueue(Request $request): View
     {
-        return view('admin.print-queue', ['jobs' => PrintJob::query()->with('order', 'orderItem', 'variant.product', 'variant.color', 'variant.size')->whereIn('status', ['queued', 'printing'])->latest()->paginate(30)]);
+        $status = $request->query('status');
+        abort_if($status && ! in_array($status, ['queued', 'printing', 'failed', 'completed'], true), 422);
+        $jobs = PrintJob::query()->with('order', 'orderItem', 'variant.product', 'variant.color', 'variant.size')->when($status, fn ($query) => $query->where('status', $status), fn ($query) => $query->whereIn('status', ['queued', 'printing', 'failed']))->latest()->paginate(30)->withQueryString();
+
+        return view('admin.print-queue', compact('jobs', 'status'));
     }
 
-    public function inventory(): View
+    public function inventory(Request $request): View
     {
-        return view('admin.inventory', ['variants' => ProductVariant::query()->with('product', 'color', 'size')->orderBy('stock')->paginate(30)]);
+        $lowStock = $request->boolean('low_stock');
+        $threshold = max(0, min(100000, $request->integer('threshold', 3)));
+        $variants = ProductVariant::query()->with('product', 'color', 'size')->when($lowStock, fn ($query) => $query->whereRaw('(stock - reserved_stock) <= ?', [$threshold]))->orderBy('stock')->paginate(30)->withQueryString();
+
+        return view('admin.inventory', compact('variants', 'lowStock', 'threshold'));
+    }
+
+    public function inventoryMovements(Request $request): View
+    {
+        $variantId = $request->integer('variant_id') ?: null;
+        $movements = InventoryMovement::query()->with('variant.product', 'variant.color', 'variant.size')->when($variantId, fn ($query) => $query->where('product_variant_id', $variantId))->latest()->paginate(40)->withQueryString();
+
+        return view('admin.inventory-movements', ['movements' => $movements, 'variants' => ProductVariant::with('product')->orderBy('sku')->get(), 'variantId' => $variantId]);
     }
 
     public function adjustInventory(AdjustInventoryRequest $request, ProductVariant $variant, InventoryService $inventory): RedirectResponse
@@ -93,5 +112,22 @@ class AdminController extends Controller
         $product->update($request->validated());
 
         return back()->with('success', 'محصول به‌روزرسانی شد.');
+    }
+
+    public function confirmArchiveProduct(Product $product): View
+    {
+        abort_unless(app()->environment(['local', 'testing']), 404);
+        return view('admin.product-archive', compact('product'));
+    }
+
+    public function archiveProduct(Request $request, Product $product): RedirectResponse
+    {
+        abort_unless(app()->environment(['local', 'testing']), 404);
+        $data = $request->validate(['reason' => ['required', 'string', 'min:3', 'max:500']]);
+        $old = ['status' => $product->status];
+        $product->update(['status' => 'archived']);
+        DB::table('audit_logs')->insert(['user_id' => $request->user()?->id, 'action' => 'product.archived', 'auditable_type' => Product::class, 'auditable_id' => $product->id, 'old_values' => json_encode($old), 'new_values' => json_encode(['status' => 'archived', 'reason' => $data['reason']], JSON_UNESCAPED_UNICODE), 'ip_address' => $request->ip(), 'created_at' => now(), 'updated_at' => now()]);
+
+        return redirect()->route('admin.products')->with('success', 'محصول بایگانی شد؛ اطلاعات و سفارش‌های قبلی حفظ شده‌اند.');
     }
 }

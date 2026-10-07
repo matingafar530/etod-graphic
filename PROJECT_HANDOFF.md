@@ -4,7 +4,7 @@
 
 **Project path:** `C:\xampp\htdocs\Etod-graphic-accio`
 
-**Current HEAD commit:** `cef3c99 feat: add product catalog and media management`
+**Current HEAD at original report:** `cef3c99 feat: add product catalog and media management`
 
 **Current project state:** Development/demo-ready foundation. The project is not intended for real production use yet. Real mobile authentication, live payment, live SMS, WhatsApp, production admin authentication, and production deployment are intentionally deferred.
 
@@ -923,5 +923,19 @@ Pint: passed
 Vite build: passed
 Latest commit: cef3c99
 ```
+
+## 15. Update — 2026-10-07
+
+The Phase A development-admin backlog has been implemented locally:
+
+- Variant create/edit UI with SKU, color, size/model, prices, active state, and initial stock recorded through the inventory service.
+- Print template create/edit UI, private template-image handling, printable-area bounds validation, and version increments for production-spec changes.
+- Variant-scoped product image assignment and primary-image selection.
+- Print-job transitions (queued → printing → completed; printing → failed; failed → queued), timestamped notes, private production-file upload/download, and guarded download of the matching customer source image.
+- Product archive confirmation with reason and audit-log entry. This changes status to archived; it does not permanently delete records.
+- Inventory movement history and available-stock low-level filtering.
+- Timezone is configured as `Asia/Tehran`.
+
+These admin routes remain local/testing-only and have no real authentication. Do not expose them to a network or deploy them. User/customer authentication, live payment, SMS/WhatsApp, notifications workflow, production authentication/deployment, and later customer experience/review phases remain deferred. No schema changes or data migrations were made in this update. Local-only uploads and environment files are excluded from Git.
 
 The last completed feature was Product Catalog and Product Media Management. The next recommended feature is Variant and Print Template administration.

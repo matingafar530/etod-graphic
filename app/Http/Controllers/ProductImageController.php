@@ -24,7 +24,9 @@ class ProductImageController extends Controller
         }
         $path = $request->file('image')->store('product-images', 'local');
         if ($request->boolean('is_primary')) {
-            $product->images()->update(['is_primary' => false]);
+            $scope = $product->images();
+            ! empty($data['product_variant_id']) ? $scope->where('product_variant_id', $data['product_variant_id']) : $scope->whereNull('product_variant_id');
+            $scope->update(['is_primary' => false]);
         }
         $product->images()->create(['product_variant_id' => $data['product_variant_id'] ?? null, 'disk' => 'local', 'path' => $path, 'alt_text' => $data['alt_text'] ?? $product->name, 'is_primary' => $request->boolean('is_primary'), 'sort_order' => (int) $product->images()->max('sort_order') + 1]);
 
