@@ -956,3 +956,15 @@ Phase B (customer experience) work completed locally:
 Tests: 26 passed, 70 assertions. Pint clean. Vite build clean. The upload-preview 500 regression (BinaryFileResponse type hint) and the customizer null-input JS error were fixed and covered by tests earlier the same day.
 
 Remaining Phase B items: none mandatory; optional polish includes advanced crop handles (resize after drawing) and per-side print previews. Next recommended phase: C (reviews/portfolio) or E (admin authentication) depending on owner priority.
+
+## 17. Update — 2026-10-07 (Phase C started: reviews)
+
+Review system implemented (Phase C items 1-4):
+
+- `reviews` table extended by migration: nullable `user_id`, unique `order_item_id` (verified purchase + one review per item), `author_name`, `reviewed_at`. Model `App\Models\Review` carries a moderation transition map (pending → approved/rejected; approved/rejected/hidden can switch among themselves) enforced by `canTransitionTo()`.
+- Submission: on the order tracking page (token or session view), each order item of a **completed** order shows a review form (rating 1-5, display name, optional text). POST `/orders/token/{token}/items/{item}/reviews`. Server guards: completed status, one review per item, product resolvable from the variant. New reviews start `pending`.
+- Storefront: product page shows up to 6 `approved` reviews (stars, name, body, date).
+- Admin: `/admin/reviews` list with status filter (pending first), approve/reject/hide buttons per allowed transition, audit-log entry `review.moderated` per change. Still local/testing-only, no auth (Phase E pending).
+- Order page now renders success/error banners and validation errors.
+
+Tests: 32 passed, 100 assertions. Pint clean. Full lifecycle verified in the browser (completed order → submit review → admin approve → visible on product page). Phase C remaining: portfolio items with consent audit trail, separate social-media consent. Next after that: Phase D notifications or Phase E admin authentication.

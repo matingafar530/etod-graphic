@@ -8,6 +8,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductImageController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\UploadController;
 use Illuminate\Support\Facades\Route;
@@ -44,6 +45,8 @@ if (app()->environment(['local', 'testing'])) {
         Route::get('/print-templates/{template}/image', [AdminPrintTemplateController::class, 'image'])->name('print-templates.image');
         Route::post('/products/{product}/images', [ProductImageController::class, 'store'])->name('products.images.store');
         Route::delete('/product-images/{image}', [ProductImageController::class, 'destroy'])->name('products.images.destroy');
+        Route::get('/reviews', [AdminController::class, 'reviews'])->name('reviews');
+        Route::patch('/reviews/{review}/status', [AdminController::class, 'updateReviewStatus'])->name('reviews.status');
     });
 }
 
@@ -55,6 +58,7 @@ Route::get('/checkout', [CheckoutController::class, 'create'])->name('checkout.c
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 Route::get('/orders/token/{token}', [OrderController::class, 'track'])->name('orders.track');
 Route::get('/orders/token/{token}/items/{item}/design', [OrderController::class, 'trackDesign'])->name('orders.track.design');
+Route::post('/orders/token/{token}/items/{item}/reviews', [ReviewController::class, 'store'])->name('reviews.store');
 Route::get('/orders/{order:order_number}', [OrderController::class, 'show'])->name('orders.show');
 Route::post('/orders/{order:order_number}/mock-payment', [CheckoutController::class, 'mockPay'])->name('orders.mock-payment');
 Route::post('/cart/items', [CartController::class, 'store'])->name('cart.items.store');

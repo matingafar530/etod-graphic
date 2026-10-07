@@ -33,6 +33,12 @@
         @if(session('success'))
             <div class="rounded-2xl bg-green-50 p-4 font-bold text-green-700">{{ session('success') }}</div>
         @endif
+        @if(session('error'))
+            <div class="mt-3 rounded-2xl bg-red-50 p-4 font-bold text-red-700">{{ session('error') }}</div>
+        @endif
+        @if($errors->any())
+            <div class="mt-3 rounded-2xl bg-red-50 p-4 font-bold text-red-700">{{ $errors->first() }}</div>
+        @endif
 
         <section class="mt-6 rounded-3xl bg-white p-8 text-center shadow-sm">
             <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl text-green-600">✓</div>
@@ -109,6 +115,34 @@
                         <p class="mt-1 text-sm font-bold text-violet-700">{{ number_format($item->total_price) }} ریال</p>
                     </div>
                 </article>
+                @if($order->status === 'completed' && $trackToken)
+                    <div class="mt-3 border-t border-[#eeeaf5] pt-4">
+                        @if($item->review)
+                            <p class="text-sm font-bold text-green-700">نظر شما برای این قلم ثبت شده{{ $item->review->status === 'approved' ? ' و منتشر شده است.' : ' و در انتظار تأیید مدیر است.' }}</p>
+                        @elseif($item->variant?->product_id)
+                            <form action="{{ route('reviews.store', ['token' => $trackToken, 'item' => $item]) }}" method="POST" class="rounded-2xl bg-[#fbfaff] p-4">
+                                @csrf
+                                <p class="text-sm font-black">نظر شما درباره این محصول</p>
+                                <div class="mt-3 flex flex-wrap items-center gap-4">
+                                    <label class="flex items-center gap-2 text-sm font-bold">امتیاز
+                                        <select name="rating" required class="rounded-xl border border-[#e5e0ef] bg-white px-3 py-2 font-bold">
+                                            <option value="5">۵ ★</option>
+                                            <option value="4">۴ ★</option>
+                                            <option value="3">۳ ★</option>
+                                            <option value="2">۲ ★</option>
+                                            <option value="1">۱ ★</option>
+                                        </select>
+                                    </label>
+                                    <label class="flex flex-1 items-center gap-2 text-sm font-bold">نام شما
+                                        <input name="author_name" value="{{ old('author_name', $order->customer_name) }}" maxlength="80" required class="w-full rounded-xl border border-[#e5e0ef] px-3 py-2">
+                                    </label>
+                                </div>
+                                <textarea name="body" rows="3" maxlength="2000" placeholder="تجربه خود از کیفیت چاپ و محصول را بنویسید (اختیاری)" class="mt-3 w-full rounded-xl border border-[#e5e0ef] px-3 py-2 text-sm">{{ old('body') }}</textarea>
+                                <button type="submit" class="mt-3 rounded-xl bg-violet-700 px-5 py-2 text-sm font-black text-white transition hover:bg-violet-800">ثبت نظر</button>
+                            </form>
+                        @endif
+                    </div>
+                @endif
             @endforeach
         </section>
 

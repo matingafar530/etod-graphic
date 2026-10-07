@@ -83,6 +83,26 @@
                     <button type="submit" class="mt-6 w-full rounded-2xl bg-violet-700 px-5 py-4 font-black text-white shadow-lg shadow-violet-200 transition hover:bg-violet-800">افزودن به سبد خرید</button>
                     <p class="mt-3 text-center text-xs text-slate-500">قیمت و موجودی در سمت سرور دوباره بررسی می‌شود.</p>
                 </form>
+
+                @if($reviews->isNotEmpty())
+                    <section class="mt-6 rounded-3xl bg-white p-6 shadow-sm">
+                        <h2 class="font-black">نظرات خریداران</h2>
+                        <div class="mt-4 space-y-4">
+                            @foreach($reviews as $review)
+                                <article class="rounded-2xl bg-[#fbfaff] p-4">
+                                    <div class="flex items-center justify-between">
+                                        <strong class="text-sm">{{ $review->author_name }}</strong>
+                                        <span class="text-sm text-amber-500" aria-label="امتیاز {{ $review->rating }} از ۵">{{ str_repeat('★', $review->rating) }}{{ str_repeat('☆', 5 - $review->rating) }}</span>
+                                    </div>
+                                    @if($review->body)
+                                        <p class="mt-2 text-sm leading-7 text-slate-600">{{ $review->body }}</p>
+                                    @endif
+                                    <p class="mt-1 text-xs text-slate-400">{{ \Illuminate\Support\Carbon::parse($review->created_at)->locale('fa')->isoFormat('YYYY/MM/DD') }}</p>
+                                </article>
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
             </section>
         </div>
     </main>

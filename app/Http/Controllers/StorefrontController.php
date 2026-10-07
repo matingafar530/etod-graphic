@@ -22,6 +22,7 @@ class StorefrontController extends Controller
 
         return view('storefront.product', [
             'product' => $product->load(['images', 'variants' => fn ($query) => $query->where('is_active', true)->with(['color', 'size', 'printTemplate'])]),
+            'reviews' => $product->reviews()->approved()->orderByDesc('reviewed_at')->limit(6)->get(['rating', 'body', 'author_name', 'reviewed_at', 'created_at']),
         ]);
     }
 }

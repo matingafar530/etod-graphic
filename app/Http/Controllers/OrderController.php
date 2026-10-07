@@ -17,14 +17,14 @@ class OrderController extends Controller
         $sessionOwned = $order->user_id === null && $order->session_id === $request->session()->getId();
         abort_unless($owned || $sessionOwned, 404);
 
-        return view('storefront.order', ['order' => $order->load('items', 'payments'), 'trackToken' => $order->access_token]);
+        return view('storefront.order', ['order' => $order->load(['items.review', 'items.variant.product', 'payments']), 'trackToken' => $order->access_token]);
     }
 
     public function track(string $token): View
     {
         $order = Order::query()->where('access_token', $token)->firstOrFail();
 
-        return view('storefront.order', ['order' => $order->load('items', 'payments'), 'trackToken' => $order->access_token]);
+        return view('storefront.order', ['order' => $order->load(['items.review', 'items.variant.product', 'payments']), 'trackToken' => $order->access_token]);
     }
 
     public function trackDesign(string $token, OrderItem $item): BinaryFileResponse

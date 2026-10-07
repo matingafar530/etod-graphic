@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\PrintJob;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Review;
 use App\Services\InventoryService;
 use App\Services\OrderStatusService;
 use Illuminate\Http\RedirectResponse;
@@ -130,5 +131,34 @@ class AdminController extends Controller
         DB::table('audit_logs')->insert(['user_id' => $request->user()?->id, 'action' => 'product.archived', 'auditable_type' => Product::class, 'auditable_id' => $product->id, 'old_values' => json_encode($old), 'new_values' => json_encode(['status' => 'archived', 'reason' => $data['reason']], JSON_UNESCAPED_UNICODE), 'ip_address' => $request->ip(), 'created_at' => now(), 'updated_at' => now()]);
 
         return redirect()->route('admin.products')->with('success', 'محصول بایگانی شد؛ اطلاعات و سفارش‌های قبلی حفظ شده‌اند.');
+    }
+
+    public function reviews(Request $request): View
+    {
+        $status = $request->query('status');
+        abort_if($status !== null && ! array_key_exists($status, Review::MODERATION_TRANSITIONS), 422);
+        $reviews = Review::query()->with('product', 'orderItem.order')
+            ->when($status, fn ($query) => $query->where('status', $status))
+            ->orderByRaw("CASE status WHEN 'pending' THEN 0 ELSE 1 END")
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('admin.reviews', ['reviews' => $reviews, 'status' => $status]);
+    }
+
+    public function updateReviewStatus(Request $request, Review $review): RedirectResponse
+    {
+        abort_unless(app()->environment(['local', 'testing']), 404);
+        $data = $request->validate(['status' => ['required', 'in:approved,rejected,hidden']]);
+        if (! $review->canTransitionTo($data['status'])) {
+            return back()->with('error', "تغییر وضعیت نظر از «{$review->status}» به «{$data['status']}» مجاز نیست.");
+        }
+
+        $old = ['status' => $review->status];
+        $review->update(['status' => $data['status'], 'reviewed_at' => now()]);
+        DB::table('audit_logs')->insert(['user_id' => $request->user()?->id, 'action' => 'review.moderated', 'auditable_type' => Review::class, 'auditable_id' => $review->id, 'old_values' => json_encode($old), 'new_values' => json_encode(['status' => $data['status']], JSON_UNESCAPED_UNICODE), 'ip_address' => $request->ip(), 'created_at' => now(), 'updated_at' => now()]);
+
+        return back()->with('success', 'وضعیت نظر به‌روزرسانی شد.');
     }
 }
