@@ -27,6 +27,9 @@
                         <div class="absolute inset-0 flex items-center justify-center text-8xl opacity-25">{{ $product->slug === 't-shirt' ? '👕' : '✦' }}</div>
                     @endif
                     <img data-design-image class="absolute hidden max-h-full max-w-full touch-none object-contain drop-shadow-lg" alt="پیش‌نمایش طرح">
+                    <div data-crop-overlay class="absolute z-10 hidden cursor-crosshair touch-none bg-violet-900/10">
+                        <div data-crop-rect class="absolute hidden border-2 border-dashed border-white shadow-[0_0_0_9999px_rgba(124,58,237,0.15)]"></div>
+                    </div>
                 </div>
                 @if($product->images->count() > 1)
                     <div class="mt-4 flex flex-wrap justify-center gap-2" data-gallery>
@@ -43,6 +46,11 @@
                     <input id="design-scale" data-scale type="range" min="10" max="80" value="45" class="mt-3 w-full accent-violet-700">
                     <label class="mt-4 block text-sm font-bold" for="design-rotation">چرخش طرح</label>
                     <input id="design-rotation" data-rotation type="range" min="-180" max="180" step="5" value="0" class="mt-3 w-full accent-violet-700">
+                    <button type="button" data-crop-toggle class="mt-5 w-full rounded-xl border border-[#e5e0ef] bg-white px-4 py-3 font-bold text-violet-700 transition hover:bg-violet-50">برش طرح</button>
+                    <div data-crop-actions class="mt-3 hidden justify-center gap-2">
+                        <button type="button" data-crop-apply class="rounded-xl bg-violet-700 px-4 py-2 font-bold text-white">اعمال برش</button>
+                        <button type="button" data-crop-cancel class="rounded-xl border border-[#e5e0ef] bg-white px-4 py-2 font-bold text-slate-600">انصراف</button>
+                    </div>
                 </div>
                 <label class="mt-5 flex cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-violet-200 bg-violet-50 px-5 py-6 text-center font-bold text-violet-700">
                     <input data-image-input type="file" accept="image/jpeg,image/png,image/webp" class="hidden">

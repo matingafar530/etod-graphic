@@ -20,8 +20,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const scale = root.querySelector('[data-scale]');
         const rotation = root.querySelector('[data-rotation]');
         const gallery = root.querySelector('[data-gallery]');
+        const cropToggle = root.querySelector('[data-crop-toggle]');
+        const cropOverlay = root.querySelector('[data-crop-overlay]');
+        const cropRect = root.querySelector('[data-crop-rect]');
+        const cropApply = root.querySelector('[data-crop-apply]');
+        const cropCancel = root.querySelector('[data-crop-cancel]');
+        const cropActions = root.querySelector('[data-crop-actions]');
         let design = { x: 50, y: 50, width: 45, height: 45, rotation: 0 };
         let drag = null;
+        let cropping = false;
+        let cropStart = null;
+        let cropArea = null;
 
         const printAreaBounds = () => {
             if (!stage || !area) return { minX: 0, maxX: 100, minY: 0, maxY: 100 };
@@ -51,18 +60,29 @@ document.addEventListener('DOMContentLoaded', () => {
             image.style.transform = `translate(-50%, -50%) rotate(${design.rotation}deg)`;
             dataInput.value = JSON.stringify(design);
         };
+        const resetDesign = () => {
+            design = { x: 50, y: 50, width: 45, height: 45, rotation: 0 };
+            if (scale) scale.value = '45';
+            if (rotation) rotation.value = '0';
+        };
+        const exitCrop = () => {
+            cropping = false; cropStart = null; cropArea = null;
+            cropOverlay?.classList.add('hidden');
+            cropRect?.classList.add('hidden');
+            cropActions?.classList.add('hidden');
+        };
         const upload = async (file) => {
             const body = new FormData(); body.append('image', file);
             status.textContent = 'در حال آپلود تصویر...';
             try {
-                const response = await fetch(root.dataset.uploadUrl, { method: 'POST', headers: { 'X-CSRF-TOKEN': root.dataset.csrf }, body });
+                const response = await fetch(root.dataset.uploadUrl, { method: 'POST', headers: { 'X-CSRF-TOKEN': root.dataset.csrf, 'Accept': 'application/json' }, body });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.message || 'آپلود تصویر انجام نشد.');
                 uploadId.value = result.id; image.src = result.preview_url; image.classList.remove('hidden');
                 root.querySelector('[data-print-area-wrap]')?.classList.remove('hidden'); status.textContent = 'تصویر آماده و قابل تنظیم است.'; render();
             } catch (error) { status.textContent = error.message; }
         };
-        fileInput?.addEventListener('change', () => fileInput.files[0] && upload(fileInput.files[0]));
+        fileInput?.addEventListener('change', () => { exitCrop(); fileInput.files[0] && upload(fileInput.files[0]); });
         scale?.addEventListener('input', () => { design.width = Number(scale.value); design.height = Number(scale.value); render(); });
         rotation?.addEventListener('input', () => { design.rotation = Number(rotation.value); render(); });
         gallery?.querySelectorAll('[data-gallery-thumb]').forEach((thumb) => {
@@ -78,9 +98,69 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
         });
+        cropToggle?.addEventListener('click', () => {
+            if (image.classList.contains('hidden')) return;
+            cropping = true;
+            design.rotation = 0; render();
+            cropOverlay.style.left = `${design.x - design.width / 2}%`;
+            cropOverlay.style.top = `${design.y - design.height / 2}%`;
+            cropOverlay.style.width = `${design.width}%`;
+            cropOverlay.style.height = `${design.height}%`;
+            cropOverlay.classList.remove('hidden');
+            cropRect.classList.add('hidden');
+            cropActions.classList.add('hidden');
+            status.textContent = 'ناحیه دلخواه طرح را با ماوس یا انگشت انتخاب کنید.';
+        });
+        cropOverlay?.addEventListener('pointerdown', (event) => {
+            if (!cropping) return;
+            try { cropOverlay.setPointerCapture(event.pointerId); } catch { /* synthetic events have no active pointer */ }
+            const box = cropOverlay.getBoundingClientRect();
+            cropStart = { x: Math.min(1, Math.max(0, (event.clientX - box.left) / box.width)), y: Math.min(1, Math.max(0, (event.clientY - box.top) / box.height)) };
+            cropArea = null;
+            cropRect.classList.remove('hidden');
+            cropActions.classList.add('hidden');
+        });
+        cropOverlay?.addEventListener('pointermove', (event) => {
+            if (!cropping || !cropStart) return;
+            const box = cropOverlay.getBoundingClientRect();
+            const current = { x: Math.min(1, Math.max(0, (event.clientX - box.left) / box.width)), y: Math.min(1, Math.max(0, (event.clientY - box.top) / box.height)) };
+            cropArea = { x0: Math.min(cropStart.x, current.x), y0: Math.min(cropStart.y, current.y), x1: Math.max(cropStart.x, current.x), y1: Math.max(cropStart.y, current.y) };
+            cropRect.style.left = `${cropArea.x0 * 100}%`;
+            cropRect.style.top = `${cropArea.y0 * 100}%`;
+            cropRect.style.width = `${(cropArea.x1 - cropArea.x0) * 100}%`;
+            cropRect.style.height = `${(cropArea.y1 - cropArea.y0) * 100}%`;
+        });
+        cropOverlay?.addEventListener('pointerup', () => {
+            if (!cropping || !cropStart) return;
+            cropStart = null;
+            const bigEnough = cropArea && (cropArea.x1 - cropArea.x0) > 0.05 && (cropArea.y1 - cropArea.y0) > 0.05;
+            if (!bigEnough) { cropArea = null; cropRect.classList.add('hidden'); }
+            cropActions.classList.toggle('hidden', !bigEnough);
+        });
+        cropCancel?.addEventListener('click', exitCrop);
+        cropApply?.addEventListener('click', async () => {
+            if (!cropping || !cropArea || !image.naturalWidth) return;
+            const sx = Math.round(cropArea.x0 * image.naturalWidth);
+            const sy = Math.round(cropArea.y0 * image.naturalHeight);
+            const sw = Math.max(1, Math.round((cropArea.x1 - cropArea.x0) * image.naturalWidth));
+            const sh = Math.max(1, Math.round((cropArea.y1 - cropArea.y0) * image.naturalHeight));
+            if (sw < 300 || sh < 300) {
+                status.textContent = 'ناحیه انتخابی کوچک است؛ حداقل ۳۰۰ در ۳۰۰ پیکسل لازم است.';
+                return;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = sw; canvas.height = sh;
+            canvas.getContext('2d').drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+            exitCrop();
+            resetDesign();
+            render();
+            await upload(new File([blob], 'cropped-design.png', { type: 'image/png' }));
+        });
         stage?.addEventListener('pointerdown', (event) => {
             if (event.target !== image || image.classList.contains('hidden')) return;
-            image.setPointerCapture(event.pointerId); drag = { x: event.clientX, y: event.clientY, startX: design.x, startY: design.y };
+            try { image.setPointerCapture(event.pointerId); } catch { /* synthetic events have no active pointer */ }
+            drag = { x: event.clientX, y: event.clientY, startX: design.x, startY: design.y };
         });
         stage?.addEventListener('pointermove', (event) => {
             if (!drag) return; const box = stage.getBoundingClientRect();
