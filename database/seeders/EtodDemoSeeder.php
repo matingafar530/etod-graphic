@@ -32,15 +32,16 @@ class EtodDemoSeeder extends Seeder
         $sizes = collect(['S', 'M', 'L', 'XL', '2XL', '3XL', '11oz', '15oz', '20oz', '500ml', 'iPhone 13', 'iPhone 14', 'iPhone 15', 'Galaxy A54', 'Galaxy S23', '22×18cm', '9×9cm', '37×42cm', '40×40cm', '45×45cm'])
             ->mapWithKeys(fn ($name) => [Str::slug($name) => Size::create(['name' => $name, 'slug' => Str::slug($name)])]);
 
+        // Test prices in IRR — intentionally non-production placeholder values.
         $products = [
-            ['name' => 'تی‌شرت', 'slug' => 't-shirt', 'category' => 'wearables', 'sizes' => ['S', 'M', 'L', 'XL', '2XL', '3XL'], 'colors' => ['white', 'black', 'red', 'blue']],
-            ['name' => 'هودی', 'slug' => 'hoodie', 'category' => 'wearables', 'sizes' => ['M', 'L', 'XL', '2XL'], 'colors' => ['black', 'gray', 'red']],
-            ['name' => 'ماگ سرامیکی', 'slug' => 'ceramic-mug', 'category' => 'drinkware', 'sizes' => ['11oz', '15oz'], 'colors' => ['white']],
-            ['name' => 'تامبلر', 'slug' => 'tumbler', 'category' => 'drinkware', 'sizes' => ['20oz'], 'colors' => ['white', 'black']],
-            ['name' => 'قاب موبایل', 'slug' => 'phone-case', 'category' => 'phone-cases', 'sizes' => ['iPhone 13', 'iPhone 14', 'iPhone 15', 'Galaxy A54', 'Galaxy S23'], 'colors' => ['white', 'black']],
-            ['name' => 'کیف دستی', 'slug' => 'tote-bag', 'category' => 'fabric', 'sizes' => ['37×42cm'], 'colors' => ['white']],
-            ['name' => 'کوسن', 'slug' => 'cushion-cover', 'category' => 'fabric', 'sizes' => ['40×40cm', '45×45cm'], 'colors' => ['white']],
-            ['name' => 'پازل', 'slug' => 'puzzle', 'category' => 'gifts', 'sizes' => ['22×18cm'], 'colors' => ['white']],
+            ['name' => 'تی‌شرت', 'slug' => 't-shirt', 'category' => 'wearables', 'sizes' => ['S', 'M', 'L', 'XL', '2XL', '3XL'], 'colors' => ['white', 'black', 'red', 'blue'], 'base_price' => 250000, 'printing_price' => 80000],
+            ['name' => 'هودی', 'slug' => 'hoodie', 'category' => 'wearables', 'sizes' => ['M', 'L', 'XL', '2XL'], 'colors' => ['black', 'gray', 'red'], 'base_price' => 650000, 'printing_price' => 100000],
+            ['name' => 'ماگ سرامیکی', 'slug' => 'ceramic-mug', 'category' => 'drinkware', 'sizes' => ['11oz', '15oz'], 'colors' => ['white'], 'base_price' => 180000, 'printing_price' => 60000],
+            ['name' => 'تامبلر', 'slug' => 'tumbler', 'category' => 'drinkware', 'sizes' => ['20oz'], 'colors' => ['white', 'black'], 'base_price' => 320000, 'printing_price' => 70000],
+            ['name' => 'قاب موبایل', 'slug' => 'phone-case', 'category' => 'phone-cases', 'sizes' => ['iPhone 13', 'iPhone 14', 'iPhone 15', 'Galaxy A54', 'Galaxy S23'], 'colors' => ['white', 'black'], 'base_price' => 150000, 'printing_price' => 60000],
+            ['name' => 'کیف دستی', 'slug' => 'tote-bag', 'category' => 'fabric', 'sizes' => ['37×42cm'], 'colors' => ['white'], 'base_price' => 190000, 'printing_price' => 70000],
+            ['name' => 'کوسن', 'slug' => 'cushion-cover', 'category' => 'fabric', 'sizes' => ['40×40cm', '45×45cm'], 'colors' => ['white'], 'base_price' => 220000, 'printing_price' => 80000],
+            ['name' => 'پازل', 'slug' => 'puzzle', 'category' => 'gifts', 'sizes' => ['22×18cm'], 'colors' => ['white'], 'base_price' => 160000, 'printing_price' => 50000],
         ];
 
         foreach ($products as $data) {
@@ -49,6 +50,7 @@ class EtodDemoSeeder extends Seeder
                 'name' => $data['name'], 'slug' => $data['slug'],
                 'description' => 'محصول تستی چاپ سفارشی Etod Graphic.',
                 'status' => 'published', 'is_customizable' => true,
+                'base_price' => $data['base_price'], 'printing_price' => $data['printing_price'],
             ]);
 
             foreach ($data['sizes'] as $sizeName) {

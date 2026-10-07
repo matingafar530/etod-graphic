@@ -9,6 +9,7 @@ use App\Models\PrintJob;
 use App\Models\ProductVariant;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class OrderService
@@ -31,6 +32,7 @@ class OrderService
                 'user_id' => $request->user()?->id,
                 'session_id' => $request->session()->getId(),
                 'order_number' => $this->nextOrderNumber(),
+                'access_token' => Str::random(40),
                 'status' => 'pending_payment',
                 'payment_status' => 'pending',
                 'customer_name' => $customer['customer_name'],
@@ -48,7 +50,8 @@ class OrderService
                 }
 
                 $variant->increment('reserved_stock', $cartItem->quantity);
-                $lineTotal = $cartItem->unit_price * $cartItem->quantity;
+                $unitPrice = (int) (($variant->price ?? $variant->product->base_price) + ($variant->printing_price ?? $variant->product->printing_price));
+                $lineTotal = $unitPrice * $cartItem->quantity;
                 $subtotal += $lineTotal;
 
                 OrderItem::create([
@@ -58,7 +61,7 @@ class OrderService
                     'variant_snapshot' => ['sku' => $variant->sku, 'color' => $variant->color?->name, 'size' => $variant->size?->name, 'model' => $variant->model],
                     'sku' => $variant->sku,
                     'quantity' => $cartItem->quantity,
-                    'unit_price' => $cartItem->unit_price,
+                    'unit_price' => $unitPrice,
                     'printing_price' => $variant->printing_price ?? $variant->product->printing_price,
                     'total_price' => $lineTotal,
                     'customization_data' => $cartItem->customization_data,

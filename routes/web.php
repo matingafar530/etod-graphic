@@ -53,8 +53,10 @@ Route::get('/products/{product:slug}', [StorefrontController::class, 'show'])->n
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::get('/checkout', [CheckoutController::class, 'create'])->name('checkout.create');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+Route::get('/orders/token/{token}', [OrderController::class, 'track'])->name('orders.track');
+Route::get('/orders/token/{token}/items/{item}/design', [OrderController::class, 'trackDesign'])->name('orders.track.design');
 Route::get('/orders/{order:order_number}', [OrderController::class, 'show'])->name('orders.show');
-Route::post('/orders/{order}/mock-payment', [CheckoutController::class, 'mockPay'])->name('orders.mock-payment');
+Route::post('/orders/{order:order_number}/mock-payment', [CheckoutController::class, 'mockPay'])->name('orders.mock-payment');
 Route::post('/cart/items', [CartController::class, 'store'])->name('cart.items.store');
 Route::patch('/cart/items/{item}', [CartController::class, 'update'])->name('cart.items.update');
 Route::delete('/cart/items/{item}', [CartController::class, 'destroy'])->name('cart.items.destroy');

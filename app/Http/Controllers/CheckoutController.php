@@ -28,19 +28,25 @@ class CheckoutController extends Controller
     {
         $order = $this->orderService->createFromCart($request, $request->validated());
 
-        return redirect()->route('orders.show', $order)->with('success', 'سفارش آزمایشی شما ایجاد شد.');
+        return redirect()->route('orders.track', ['token' => $order->access_token])->with('success', 'سفارش شما با موفقیت ثبت شد.');
     }
 
     public function mockPay(Request $request, string $order): RedirectResponse
     {
-        $model = $this->ownedOrder($request, $order);
+        $model = $this->authorizedOrder($request, $order);
         $this->orderService->mockPay($model);
 
-        return redirect()->route('orders.show', $model)->with('success', 'پرداخت آزمایشی با موفقیت ثبت شد.');
+        return redirect()->route('orders.track', ['token' => $model->access_token])->with('success', 'پرداخت آزمایشی با موفقیت ثبت شد.');
     }
 
-    private function ownedOrder(Request $request, string $order)
+    private function authorizedOrder(Request $request, string $order): Order
     {
-        return Order::query()->where('order_number', $order)->where($request->user() ? 'user_id' : 'session_id', $request->user()?->id ?? $request->session()->getId())->firstOrFail();
+        $model = Order::query()->where('order_number', $order)->firstOrFail();
+        $owned = ($model->user_id !== null && $model->user_id === $request->user()?->id)
+            || ($model->user_id === null && $model->session_id === $request->session()->getId());
+        $tokenValid = is_string($request->input('token')) && hash_equals((string) $model->access_token, $request->input('token'));
+        abort_unless($owned || $tokenValid, 404);
+
+        return $model;
     }
 }

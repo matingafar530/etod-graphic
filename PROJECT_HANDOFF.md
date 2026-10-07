@@ -939,3 +939,20 @@ The Phase A development-admin backlog has been implemented locally:
 These admin routes remain local/testing-only and have no real authentication. Do not expose them to a network or deploy them. User/customer authentication, live payment, SMS/WhatsApp, notifications workflow, production authentication/deployment, and later customer experience/review phases remain deferred. No schema changes or data migrations were made in this update. Local-only uploads and environment files are excluded from Git.
 
 The last completed feature was Product Catalog and Product Media Management. The next recommended feature is Variant and Print Template administration.
+
+## 16. Update — 2026-10-07 (Phase B started)
+
+Phase B (customer experience) work completed locally:
+
+- Product image gallery: multi-image products render clickable thumbnails that swap the main image with active-state styling.
+- Design rotation UI: -180..180 slider writing the already-validated `customization_data.rotation` field.
+- Print-area clamping: the whole design box is clamped inside the print-area rect (centered when larger than the area), replacing the loose 0-100 stage clamp.
+- Guest order tracking token: `orders.access_token` (unique, 40 chars) generated per order and backfilled by migration. Checkout and mock payment redirect to `/orders/token/{token}`; design previews of an order are served through `/orders/token/{token}/items/{item}/design` (authorized by token). Session-based `orders.show` remains. Mock payment accepts session ownership OR a matching `token` input.
+- Order confirmation page rebuilt: success hero, copyable tracking link box, status timeline (Persian labels), payment section, item snapshots with design preview, shipping info, print-receipt button.
+- Checkout price integrity: order items now recalculate `unit_price` from the current variant/product prices at checkout instead of trusting the stored cart price.
+- Demo seed prices: products now seed with placeholder IRR base/printing prices (clearly test data); the local dev DB was updated to match.
+- Design crop support: client-side crop mode in the customizer (drag a rect on the uploaded image, apply/cancel). Cropped output re-uploads through the same secure endpoint. Client-side guard enforces the server minimum of 300x300 px. Upload fetches now send `Accept: application/json` so validation errors render as messages instead of HTML redirects.
+
+Tests: 26 passed, 70 assertions. Pint clean. Vite build clean. The upload-preview 500 regression (BinaryFileResponse type hint) and the customizer null-input JS error were fixed and covered by tests earlier the same day.
+
+Remaining Phase B items: none mandatory; optional polish includes advanced crop handles (resize after drawing) and per-side print previews. Next recommended phase: C (reviews/portfolio) or E (admin authentication) depending on owner priority.
